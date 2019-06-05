@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?><launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+  <stringAttribute value="mcp.client.Start" key="org.eclipse.jdt.launching.MAIN_TYPE"/>
+  <stringAttribute value="clean" key="org.eclipse.jdt.launching.PROJECT_ATTR"/>
+  <stringAttribute value="E:\github file\carpet\carpetmod-master\projects\clean\run" key="org.eclipse.jdt.launching.WORKING_DIRECTORY"/>
+  <mapAttribute key="org.eclipse.debug.core.environmentVariables">
+    <mapEntry value="C:\Users\lenovo\.gradle\caches\forge_gradle\assets" key="assetDirectory"/>
+  </mapAttribute>
+</launchConfiguration>
