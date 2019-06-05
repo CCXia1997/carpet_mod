@@ -1,0 +1,21 @@
+--- a/net/minecraft/network/play/server/SPacketPlayerListHeaderFooter.java
++++ b/net/minecraft/network/play/server/SPacketPlayerListHeaderFooter.java
+@@ -13,6 +13,18 @@
+     private ITextComponent header;
+     private ITextComponent footer;
+ 
++    //CM accessorts for header and footer
++    public void setHeader(ITextComponent what)
++    {
++        header = what;
++    }
++
++    public void setFooter(ITextComponent what)
++    {
++        footer = what;
++    }
++    //end CM
++
+     public void readPacketData(PacketBuffer buf) throws IOException
+     {
+         this.header = buf.readTextComponent();

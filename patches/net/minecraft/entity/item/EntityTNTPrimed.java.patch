@@ -1,0 +1,87 @@
+--- a/net/minecraft/entity/item/EntityTNTPrimed.java
++++ b/net/minecraft/entity/item/EntityTNTPrimed.java
+@@ -1,6 +1,10 @@
+ package net.minecraft.entity.item;
+ 
+ import javax.annotation.Nullable;
++
++import carpet.CarpetSettings;
++import carpet.logging.LoggerRegistry;
++import carpet.logging.logHelpers.TNTLogHelper;
+ import net.minecraft.entity.Entity;
+ import net.minecraft.entity.EntityLivingBase;
+ import net.minecraft.entity.EntityType;
+@@ -10,6 +14,7 @@
+ import net.minecraft.network.datasync.DataParameter;
+ import net.minecraft.network.datasync.DataSerializers;
+ import net.minecraft.network.datasync.EntityDataManager;
++import net.minecraft.util.math.Vec3d;
+ import net.minecraft.world.World;
+ 
+ public class EntityTNTPrimed extends Entity
+@@ -19,9 +24,22 @@
+     private EntityLivingBase tntPlacedBy;
+     private int fuse = 80;
+ 
++    // ----- Carpet Start ----- //
++    private TNTLogHelper logHelper = null;
++    //end
++
++    public EntityTNTPrimed(EntityType<?> entityTypeIn, World worldIn)
++    {
++        super(entityTypeIn, worldIn);
++        if (LoggerRegistry.__tnt && !worldIn.isRemote)
++        {
++            logHelper = new TNTLogHelper();
++        }
++    }
++
+     public EntityTNTPrimed(World worldIn)
+     {
+-        super(EntityType.TNT, worldIn);
++        this(EntityType.TNT, worldIn);
+         this.preventEntitySpawning = true;
+         this.isImmuneToFire = true;
+         this.setSize(0.98F, 0.98F);
+@@ -31,10 +49,13 @@
+     {
+         this(worldIn);
+         this.setPosition(x, y, z);
+-        float f = (float)(Math.random() * (double)((float)Math.PI * 2F));
+-        this.motionX = (double)(-((float)Math.sin((double)f)) * 0.02F);
+-        this.motionY = (double)0.2F;
+-        this.motionZ = (double)(-((float)Math.cos((double)f)) * 0.02F);
++        // [CM] Changed value of float 'f' and if statement around vanilla code.
++        if(!CarpetSettings.getBool("tntPrimerMomentumRemoved")) {
++            float f = (float) (Math.random() * (double) ((float) Math.PI * 2F));
++            this.motionX = (double) (-((float) Math.sin((double) f)) * 0.02F);
++            this.motionY = (double) 0.2F;
++            this.motionZ = (double) (-((float) Math.cos((double) f)) * 0.02F);
++        }
+         this.setFuse(80);
+         this.prevPosX = x;
+         this.prevPosY = y;
+@@ -59,6 +80,12 @@
+ 
+     public void tick()
+     {
++        // ----- Carpet Start ----- //
++        if (LoggerRegistry.__tnt && logHelper != null && !logHelper.initialized)
++        {
++            logHelper.onPrimed(posX, posY, posZ, new Vec3d(motionX, motionY, motionZ));
++        }
++        // ----- Carpet End ----- //
+         this.prevPosX = this.posX;
+         this.prevPosY = this.posY;
+         this.prevPosZ = this.posZ;
+@@ -100,6 +127,10 @@
+ 
+     private void explode()
+     {
++        // ----- Carpet Start ----- //
++        if (LoggerRegistry.__tnt && logHelper != null)
++            logHelper.onExploded(posX, posY, posZ);
++        // ----- Carpet End ----- //
+         float f = 4.0F;
+         this.world.createExplosion(this, this.posX, this.posY + (double)(this.height / 16.0F), this.posZ, 4.0F, true);
+     }

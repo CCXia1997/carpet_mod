@@ -1,0 +1,29 @@
+--- a/net/minecraft/command/impl/SetBlockCommand.java
++++ b/net/minecraft/command/impl/SetBlockCommand.java
+@@ -1,5 +1,6 @@
+ package net.minecraft.command.impl;
+ 
++import carpet.CarpetSettings;
+ import com.mojang.brigadier.CommandDispatcher;
+ import com.mojang.brigadier.exceptions.CommandSyntaxException;
+ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+@@ -73,13 +74,18 @@
+                 flag = true;
+             }
+ 
+-            if (flag && !state.place(worldserver, pos, 2))
++            if (flag && !state.place(worldserver, pos, 2 | (CarpetSettings.getBool("fillUpdates")?0:1024))) // [CM]
+             {
+                 throw FAILED_EXCEPTION.create();
+             }
+             else
+             {
++                // CM
++                if (CarpetSettings.getBool("fillUpdates"))
++                {
+                 worldserver.notifyNeighbors(pos, state.getState().getBlock());
++                }
++                // CM end
+                 source.sendFeedback(new TextComponentTranslation("commands.setblock.success", pos.getX(), pos.getY(), pos.getZ()), true);
+                 return 1;
+             }

@@ -1,0 +1,39 @@
+--- a/net/minecraft/world/gen/feature/KelpFeature.java
++++ b/net/minecraft/world/gen/feature/KelpFeature.java
+@@ -1,6 +1,9 @@
+ package net.minecraft.world.gen.feature;
+ 
+ import java.util.Random;
++import java.util.function.Supplier;
++
++import carpet.CarpetSettings;
+ import net.minecraft.block.BlockKelpTop;
+ import net.minecraft.block.state.IBlockState;
+ import net.minecraft.init.Blocks;
+@@ -23,14 +26,15 @@
+             IBlockState iblockstate = Blocks.KELP.getDefaultState();
+             IBlockState iblockstate1 = Blocks.KELP_PLANT.getDefaultState();
+             int k = 1 + rand.nextInt(10);
+-
++            final int x = CarpetSettings.getInt("kelpGenerationGrowLimit");
++            Supplier<Integer> height = () -> 25-x+rand.nextInt(Math.min(23,x+1));
+             for (int l = 0; l <= k; ++l)
+             {
+                 if (worldIn.getBlockState(blockpos).getBlock() == Blocks.WATER && worldIn.getBlockState(blockpos.up()).getBlock() == Blocks.WATER && iblockstate1.isValidPosition(worldIn, blockpos))
+                 {
+                     if (l == k)
+                     {
+-                        worldIn.setBlockState(blockpos, iblockstate.with(BlockKelpTop.AGE, Integer.valueOf(rand.nextInt(23))), 2);
++                        worldIn.setBlockState(blockpos, iblockstate.with(BlockKelpTop.AGE, height.get()), 2);
+                         ++i;
+                     }
+                     else
+@@ -44,7 +48,7 @@
+ 
+                     if (iblockstate.isValidPosition(worldIn, blockpos1) && worldIn.getBlockState(blockpos1.down()).getBlock() != Blocks.KELP)
+                     {
+-                        worldIn.setBlockState(blockpos1, iblockstate.with(BlockKelpTop.AGE, Integer.valueOf(rand.nextInt(23))), 2);
++                        worldIn.setBlockState(blockpos1, iblockstate.with(BlockKelpTop.AGE, height.get()), 2);
+                         ++i;
+                     }
+ 

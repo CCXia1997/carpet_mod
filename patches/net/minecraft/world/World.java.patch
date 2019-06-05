@@ -1,0 +1,119 @@
+--- a/net/minecraft/world/World.java
++++ b/net/minecraft/world/World.java
+@@ -1,5 +1,8 @@
+ package net.minecraft.world;
+ 
++import carpet.CarpetSettings;
++import carpet.helpers.TickSpeed;
++import carpet.utils.CarpetProfiler;
+ import com.google.common.base.MoreObjects;
+ import com.google.common.collect.Lists;
+ import it.unimi.dsi.fastutil.longs.LongSet;
+@@ -238,7 +241,7 @@
+         {
+             Chunk chunk = this.getChunk(pos);
+             Block block = newState.getBlock();
+-            IBlockState iblockstate = chunk.setBlockState(pos, newState, (flags & 64) != 0);
++            IBlockState iblockstate = chunk.setBlockState(pos, newState, (flags & 64) != 0, (flags & 1024) != 0);
+ 
+             if (iblockstate == null)
+             {
+@@ -277,7 +280,9 @@
+                         }
+                     }
+ 
+-                    if ((flags & 16) == 0)
++                    //fillUpdates added case
++                    // if ((flags & 16) == 0)
++                    if (((flags & 16) == 0) && ((flags & 1024) == 0))
+                     {
+                         int i = flags & -2;
+                         iblockstate.updateDiagonalNeighbors(this, pos, i);
+@@ -1199,6 +1204,11 @@
+     {
+         this.profiler.startSection("entities");
+         this.profiler.startSection("global");
++        /// CM profiler
++        int did = this.dimension.getType().getId();
++        String world_name = (did==0)?"Overworld":((did<0?"The Nether":"The End"));
++        CarpetProfiler.ProfilerToken tok_entities = CarpetProfiler.start_section_concurrent(world_name, "Entities", this.isRemote);
++        // end
+ 
+         for (int i = 0; i < this.weatherEffects.size(); ++i)
+         {
+@@ -1259,6 +1269,7 @@
+         for (int i1 = 0; i1 < this.loadedEntityList.size(); ++i1)
+         {
+             Entity entity2 = this.loadedEntityList.get(i1);
++            CarpetProfiler.ProfilerToken tok = CarpetProfiler.start_entity_section(world_name, entity2);
+             Entity entity3 = entity2.getRidingEntity();
+ 
+             if (entity3 != null)
+@@ -1273,7 +1284,8 @@
+ 
+             this.profiler.startSection("tick");
+ 
+-            if (!entity2.removed && !(entity2 instanceof EntityPlayerMP))
++            // [CM] Tick Freeze
++            if (!entity2.removed && !(entity2 instanceof EntityPlayerMP) && (TickSpeed.process_entities || entity2 instanceof EntityPlayer))
+             {
+                 try
+                 {
+@@ -1304,10 +1316,14 @@
+                 this.loadedEntityList.remove(i1--);
+                 this.onEntityRemoved(entity2);
+             }
++            CarpetProfiler.end_current_entity_section(tok);
+ 
+             this.profiler.endSection();
+         }
++        CarpetProfiler.end_current_section_concurrent(tok_entities);
++        tok_entities = CarpetProfiler.start_section_concurrent(world_name, "Tile Entities", this.isRemote);
+ 
++
+         this.profiler.endStartSection("blockEntities");
+ 
+         if (!this.tileEntitiesToBeRemoved.isEmpty())
+@@ -1323,12 +1339,15 @@
+         while (iterator.hasNext())
+         {
+             TileEntity tileentity = iterator.next();
++            CarpetProfiler.ProfilerToken tok = CarpetProfiler.start_tileentity_section(world_name, tileentity);
+ 
++
+             if (!tileentity.isRemoved() && tileentity.hasWorld())
+             {
+                 BlockPos blockpos = tileentity.getPos();
+ 
+-                if (this.isBlockLoaded(blockpos) && this.worldBorder.contains(blockpos))
++                // [CM extra check to process entities]
++                if (this.isBlockLoaded(blockpos) && this.worldBorder.contains(blockpos) && TickSpeed.process_entities)
+                 {
+                     try
+                     {
+@@ -1359,6 +1378,7 @@
+                     this.getChunk(tileentity.getPos()).removeTileEntity(tileentity.getPos());
+                 }
+             }
++            CarpetProfiler.end_current_entity_section(tok);
+         }
+ 
+         this.processingLoadedTiles = false;
+@@ -1389,6 +1409,7 @@
+ 
+             this.addedTileEntityList.clear();
+         }
++        CarpetProfiler.end_current_section_concurrent(tok_entities);
+ 
+         this.profiler.endSection();
+         this.profiler.endSection();
+@@ -1514,7 +1535,8 @@
+                 this.getChunk(entityIn.chunkCoordX, entityIn.chunkCoordZ).removeEntityAtIndex(entityIn, entityIn.chunkCoordY);
+             }
+ 
+-            if (!entityIn.setPositionNonDirty() && !this.isChunkLoaded(l, j1, true))
++            // [CM] Faster entities can move into unloaded chunks and can get stuck in memory lagging the server. This fixes it
++            if (!CarpetSettings.getBool("unloadedEntityFix") && !entityIn.setPositionNonDirty() && !this.isChunkLoaded(l, j1, true))
+             {
+                 entityIn.addedToChunk = false;
+             }
